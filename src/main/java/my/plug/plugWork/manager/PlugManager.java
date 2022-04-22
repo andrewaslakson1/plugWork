@@ -1,48 +1,65 @@
 package my.plug.plugWork.manager;
 
-import my.plug.plugWork.annotation.EnablePlugging;
-import my.plug.plugWork.annotation.Plug;
+import my.plug.plugWork.annotation.PowerSource;
 import my.plug.plugWork.annotation.Socket;
+import my.plug.plugWork.annotation.WireStation;
+
+import my.plug.plugWork.container.WiringStation;
+import my.plug.plugWork.exception.InstantiationException;
+import my.plug.plugWork.exception.PlugWorkConfigurationException;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 
-import java.lang.reflect.Method;
 import java.util.*;
 
 public class PlugManager {
 
-    public static Map<String, Object> plugs;
+    private static Set<WiringStation> wiringStations = new HashSet<>();
+    private static Map<String, Object> plugs= new HashMap<>();
+
+    private static Set<Class> classSet = new HashSet<>();
+    private static Map<Class, Set<Class>> dependencyMap = new HashMap<>();
+
+    public static Map<String, Object> powerSources = new HashMap<>();
 
     public static void wire(String prefix) {
-        plugs = new HashMap<>();
+        setClassSet(prefix);
+        if (classSet.isEmpty()) throw new PlugWorkConfigurationException("Detected 0 classes, but how?");
 
-        Map<Class, List<Class>> dependencyMap = new HashMap<>();
-        Map<Class, Method> plugBuilderMap = new HashMap<>();
+        buildWiringStations();
+        if (wiringStations.isEmpty()) throw new PlugWorkConfigurationException("Could not locate any WiringStations.");
 
-        getDependencies(prefix, dependencyMap, plugBuilderMap);
+        buildDependencyMap();
+        if (dependencyMap.isEmpty()) throw new PlugWorkConfigurationException("Could not locate any PowerSources.");
     }
 
-    private static void getDependencies(String prefix, Map<Class, List<Class>> dependencyMap, Map<Class, Method> plugBuilderMap) {
-        Set<Class> classSet = new HashSet<>(
-                new Reflections(prefix, new SubTypesScanner(false))
-                        .getSubTypesOf(Object.class));
+    private static void setClassSet(String prefix) {
+        classSet.addAll(new Reflections(prefix, new SubTypesScanner(false))
+                .getSubTypesOf(Object.class));
+    }
 
-        classSet.stream().filter(clazz -> clazz.isAnnotationPresent(EnablePlugging.class)).forEach(clazz -> {
-            List<Class> dependencies = new ArrayList<>();
-            Arrays.stream(clazz.getFields()).forEach(field -> {
+    private static void buildWiringStations() {
+        classSet.stream().filter(clazz -> clazz.isAnnotationPresent(WireStation.class)).forEach(clazz -> {
+            try {
+                Object station = clazz.getDeclaredConstructor().newInstance();
+                wiringStations.add(new WiringStation(clazz, station));
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new InstantiationException("Failed to instantiate WireStation");
+            }
+        });
+    }
+
+    private static void buildDependencyMap() {
+        classSet.stream().filter(clazz -> clazz.isAnnotationPresent(PowerSource.class)).forEach(clazz -> {
+            Set<Class> dependencies = new HashSet<>();
+            Arrays.stream(clazz.getDeclaredFields()).forEach(field -> {
                 if (field.isAnnotationPresent(Socket.class)) {
                     dependencies.add(field.getType());
                 }
             });
             dependencyMap.put(clazz, dependencies);
-
-            //TODO: move outside and use @PlugConfig to look for these
-            Arrays.stream(clazz.getMethods()).forEach(method -> {
-                if (method.isAnnotationPresent(Plug.class)) plugBuilderMap.put(method.getReturnType(), method);
-            });
         });
         String yum = "yum";
     }
-
-
 }

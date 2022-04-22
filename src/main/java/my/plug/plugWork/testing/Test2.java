@@ -1,10 +1,10 @@
 package my.plug.plugWork.testing;
 
-import my.plug.plugWork.annotation.EnablePlugging;
+import my.plug.plugWork.annotation.PowerSource;
 import my.plug.plugWork.annotation.Socket;
 
-@EnablePlugging
+@PowerSource
 public class Test2 {
     @Socket
-    Test1 test1;
+    private Test1 test1;
 }

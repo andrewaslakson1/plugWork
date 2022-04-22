@@ -1,9 +1,9 @@
 package my.plug.plugWork.testing;
 
-import my.plug.plugWork.annotation.EnablePlugging;
 import my.plug.plugWork.annotation.Plug;
+import my.plug.plugWork.annotation.WireStation;
 
-@EnablePlugging
+@WireStation
 public class Test1 {
 
     @Plug
