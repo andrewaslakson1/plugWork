@@ -8,4 +8,20 @@ public class WiringStation {
         this.clazz = clazz;
         this.station = station;
     }
+
+    public Class getClazz() {
+        return clazz;
+    }
+
+    public void setClazz(Class clazz) {
+        this.clazz = clazz;
+    }
+
+    public Object getStation() {
+        return station;
+    }
+
+    public void setStation(Object station) {
+        this.station = station;
+    }
 }

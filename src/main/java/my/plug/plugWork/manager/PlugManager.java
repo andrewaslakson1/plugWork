@@ -1,6 +1,7 @@
 package my.plug.plugWork.manager;
 
-import my.plug.plugWork.annotation.PowerSource;
+import my.plug.plugWork.annotation.Plug;
+import my.plug.plugWork.annotation.Power;
 import my.plug.plugWork.annotation.Socket;
 import my.plug.plugWork.annotation.WireStation;
 
@@ -20,7 +21,7 @@ public class PlugManager {
     private static Set<Class> classSet = new HashSet<>();
     private static Map<Class, Set<Class>> dependencyMap = new HashMap<>();
 
-    public static Map<String, Object> powerSources = new HashMap<>();
+    public static Map<String, Object> powers = new HashMap<>();
 
     public static void wire(String prefix) {
         setClassSet(prefix);
@@ -31,6 +32,12 @@ public class PlugManager {
 
         buildDependencyMap();
         if (dependencyMap.isEmpty()) throw new PlugWorkConfigurationException("Could not locate any PowerSources.");
+
+        createWiringStationPlugs();
+
+        createPowerPlugs();
+
+        injectPlugsInSources();
     }
 
     private static void setClassSet(String prefix) {
@@ -51,7 +58,7 @@ public class PlugManager {
     }
 
     private static void buildDependencyMap() {
-        classSet.stream().filter(clazz -> clazz.isAnnotationPresent(PowerSource.class)).forEach(clazz -> {
+        classSet.stream().filter(clazz -> clazz.isAnnotationPresent(Power.class)).forEach(clazz -> {
             Set<Class> dependencies = new HashSet<>();
             Arrays.stream(clazz.getDeclaredFields()).forEach(field -> {
                 if (field.isAnnotationPresent(Socket.class)) {
@@ -61,5 +68,24 @@ public class PlugManager {
             dependencyMap.put(clazz, dependencies);
         });
         String yum = "yum";
+    }
+
+    private static void createWiringStationPlugs() {
+        wiringStations.stream().forEach(station -> {
+            Arrays.asList(station.getClazz().getDeclaredMethods()).stream()
+                    .filter(method -> method.isAnnotationPresent(Plug.class))
+                    .forEach(plugMethod -> {
+                        String name = plugMethod.getAnnotation(Plug.class).name();
+                        if (name.equals("")) name = plugMethod.getReturnType().getName();
+                        Object plug = plugMethod.invoke(station.getStation());
+                        plugs.put(name, plug);
+                    });
+        });
+    }
+
+    private static void createPowerPlugs() {
+    }
+
+    private static void injectPlugsInSources(){
     }
 }
