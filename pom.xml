@@ -6,7 +6,7 @@
 
     <groupId>my.plug</groupId>
     <artifactId>plugWork</artifactId>
-    <version>0.81-POC</version>
+    <version>1.0-MVP</version>
 
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
