@@ -7,17 +7,14 @@ import my.plug.plugWork.annotation.Start;
 
 @PowerPlug
 @Source
-public class Test3 {
+public class Source1 {
 
     @Socket
-    public Test1 test1;
-
-    @Socket
-    public Test2 test2;
+    public Power3 power3;
 
     @Start
     public void start() {
-        test1.doSomething();
-        test2.doSomething();
+        System.out.println("Inside Source, Executing actions:" + "\n");
+        power3.doSomething();
     }
 }
