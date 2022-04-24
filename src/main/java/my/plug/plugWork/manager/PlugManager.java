@@ -1,7 +1,7 @@
 package my.plug.plugWork.manager;
 
 import my.plug.plugWork.annotation.Plug;
-import my.plug.plugWork.annotation.Power;
+import my.plug.plugWork.annotation.PowerPlug;
 import my.plug.plugWork.annotation.Socket;
 import my.plug.plugWork.annotation.Source;
 import my.plug.plugWork.annotation.Start;
@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 public class PlugManager {
@@ -71,9 +72,9 @@ public class PlugManager {
     }
 
     private static void buildDependencyMap() {
-        classSet.stream().filter(clazz -> clazz.isAnnotationPresent(Power.class)).forEach(clazz -> {
+        classSet.stream().filter(clazz -> clazz.isAnnotationPresent(PowerPlug.class)).forEach(clazz -> {
             Map<String, Field> dependencies = new HashMap<>();
-            String powerName = ((Power)clazz.getAnnotation(Power.class)).name();
+            String powerName = ((PowerPlug)clazz.getAnnotation(PowerPlug.class)).name();
             if (powerName.equals("")) powerName = clazz.getName();
             Arrays.stream(clazz.getDeclaredFields()).forEach(socket -> {
                 if (socket.isAnnotationPresent(Socket.class)) {
@@ -105,9 +106,9 @@ public class PlugManager {
     }
 
     private static void createPowerPlugs() {
-        classSet.stream().filter(clazz -> clazz.isAnnotationPresent(Power.class)).forEach(clazz -> {
+        classSet.stream().filter(clazz -> clazz.isAnnotationPresent(PowerPlug.class)).forEach(clazz -> {
             try {
-                String name = ((Power)clazz.getAnnotation(Power.class)).name();
+                String name = ((PowerPlug)clazz.getAnnotation(PowerPlug.class)).name();
                 if (name.equals("")) name = clazz.getName();
                 Object power = clazz.getDeclaredConstructor().newInstance();
                 powers.put(name, power);
@@ -120,6 +121,9 @@ public class PlugManager {
         do {
             int previousSize = dependencyMap.size();
 
+            AtomicReference<Map<String, Field>> foundDependencies = new AtomicReference<>();
+            foundDependencies.set(new HashMap<>());
+
             powers.forEach((name, power) -> {
                 Map<String, Field> dependencies = dependencyMap.get(name);
 
@@ -127,10 +131,10 @@ public class PlugManager {
                     try {
                         if (plugs.containsKey(socketName)) {
                             socket.set(power, plugs.get(socketName));
-                            dependencies.remove(socketName);
+                            foundDependencies.get().put(socketName, socket);
                         } else if (powers.containsKey(socketName)) {
-                            socket .set(power, powers.get(socketName));
-                            dependencies.remove(socketName);
+                            socket.set(power, powers.get(socketName));
+                            foundDependencies.get().put(socketName, socket);
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -138,6 +142,9 @@ public class PlugManager {
                     }
                 });
 
+                foundDependencies.get().forEach((powerName, dependency) -> {
+                    dependencies.remove(powerName);
+                });
                 if (dependencies.isEmpty()) dependencyMap.remove(name);
             });
 
@@ -150,7 +157,9 @@ public class PlugManager {
         if (sourceClasses.size() == 0 || sourceClasses.size() > 1)
             throw new PlugWorkConfigurationException("1 and only 1 class may be annotated with source, found: " + sourceClasses.size());
 
-        Object source = powers.get(((Power)sourceClasses.get(0).getAnnotation(Power.class)).name());
+        String name = ((PowerPlug)sourceClasses.get(0).getAnnotation(PowerPlug.class)).name();
+        if (name.equals("")) name = sourceClasses.get(0).getName();
+        Object source = powers.get(name);
 
         List<Method> startMethods = Arrays.stream(sourceClasses.get(0).getDeclaredMethods()).filter(method -> method.isAnnotationPresent(Start.class)).collect(Collectors.toList());
         if (startMethods.size() == 0 || startMethods.size() > 1)
