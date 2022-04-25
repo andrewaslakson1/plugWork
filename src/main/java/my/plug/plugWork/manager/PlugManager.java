@@ -11,6 +11,7 @@ import my.plug.plugWork.container.WiringStation;
 import my.plug.plugWork.exception.ImpossibleDependencyException;
 import my.plug.plugWork.exception.InstantiationException;
 import my.plug.plugWork.exception.PlugWorkConfigurationException;
+import my.plug.plugWork.starter.Starter;
 
 import java.io.File;
 
@@ -215,12 +216,9 @@ public class PlugManager {
 
         cleanUp();
 
-        try {
-            startMethod.invoke(source);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new PlugWorkConfigurationException("Failed to start application");
-        }
+        Thread starter = new Thread(new Starter(source, startMethod));
+
+        starter.start();
     }
 
     private static void cleanUp() {
