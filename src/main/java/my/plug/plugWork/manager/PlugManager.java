@@ -191,10 +191,8 @@ public class PlugManager {
             foundDependencies.get().forEach((powerName, dependency) -> {
                 dependencies.remove(powerName);
             });
-            if (dependencies.isEmpty()) dependencyMap.remove(name);
+            if (!dependencies.isEmpty()) throw new ImpossibleDependencyException("Detected Impossible Dependencies, failed to fill all sockets");
         });
-
-        if (dependencyMap.size() != 0) throw new ImpossibleDependencyException("Detected Impossible Dependencies, failed to fill all sockets");
     }
 
     private static void turnOn() {
