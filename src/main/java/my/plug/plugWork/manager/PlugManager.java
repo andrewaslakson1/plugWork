@@ -12,9 +12,9 @@ import my.plug.plugWork.exception.ImpossibleDependencyException;
 import my.plug.plugWork.exception.InstantiationException;
 import my.plug.plugWork.exception.PlugWorkConfigurationException;
 
-import org.reflections.Reflections;
-import org.reflections.scanners.SubTypesScanner;
+import java.io.File;
 
+import java.io.FileInputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
@@ -25,6 +25,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
 import java.util.stream.Collectors;
 
 public class PlugManager {
@@ -61,8 +63,49 @@ public class PlugManager {
     }
 
     private static void setClassSet(String prefix) {
-        classSet.addAll(new Reflections(prefix, new SubTypesScanner(false))
-                .getSubTypesOf(Object.class));
+        /* Stolen code belongs to mythbu from StackOverflow
+         *      ~ Thanks my dude!
+         */
+        String path = prefix.replaceAll("\\.", File.separator);
+        String[] classPathEntries = System.getProperty("java.class.path").split(
+                System.getProperty("path.separator")
+        );
+
+        String name;
+        for (String classpathEntry : classPathEntries) {
+            if (classpathEntry.endsWith(".jar")) {
+                File jar = new File(classpathEntry);
+                try {
+                    JarInputStream is = new JarInputStream(new FileInputStream(jar));
+                    JarEntry entry;
+                    while((entry = is.getNextJarEntry()) != null) {
+                        name = entry.getName();
+                        if (name.endsWith(".class")) {
+                            if (name.contains(path) && name.endsWith(".class")) {
+                                String classPath = name.substring(0, entry.getName().length() - 6);
+                                classPath = classPath.replaceAll("[\\|/]", ".");
+                                classSet.add(Class.forName(classPath));
+                            }
+                        }
+                    }
+                } catch (Exception ex) {
+                    // Silence is gold
+                }
+            } else {
+                try {
+                    File base = new File(classpathEntry + File.separatorChar + path);
+                    for (File file : base.listFiles()) {
+                        name = file.getName();
+                        if (name.endsWith(".class")) {
+                            name = name.substring(0, name.length() - 6);
+                            classSet.add(Class.forName(prefix + "." + name));
+                        }
+                    }
+                } catch (Exception ex) {
+                    // Silence is gold
+                }
+            }
+        }
     }
 
     private static void buildWiringStations() {
