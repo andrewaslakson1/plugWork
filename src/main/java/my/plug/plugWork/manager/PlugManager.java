@@ -29,15 +29,21 @@ import java.util.stream.Collectors;
 
 public class PlugManager {
 
-    private static Set<WiringStation> wiringStations = new HashSet<>();
-    private static Map<String, Object> plugs= new HashMap<>();
+    private static Set<WiringStation> wiringStations;
+    private static Map<String, Object> plugs;
 
-    private static Set<Class> classSet = new HashSet<>();
-    private static Map<String, Map<String, Field>> dependencyMap = new HashMap<>();
+    private static Set<Class> classSet;
+    private static Map<String, Map<String, Field>> dependencyMap;
 
-    public static Map<String, Object> powers = new HashMap<>();
+    public static Map<String, Object> powers;
 
     public static void wire(String prefix) {
+        wiringStations = new HashSet<>();
+        plugs = new HashMap<>();
+        classSet = new HashSet<>();
+        dependencyMap = new HashMap<>();
+        powers = new HashMap<>();
+
         setClassSet(prefix);
         if (classSet.isEmpty()) throw new PlugWorkConfigurationException("Detected 0 classes, but how?");
 
