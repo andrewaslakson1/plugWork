@@ -167,38 +167,34 @@ public class PlugManager {
             }
         });
 
-        do {
-            int previousSize = dependencyMap.size();
+        AtomicReference<Map<String, Field>> foundDependencies = new AtomicReference<>();
+        foundDependencies.set(new HashMap<>());
 
-            AtomicReference<Map<String, Field>> foundDependencies = new AtomicReference<>();
-            foundDependencies.set(new HashMap<>());
+        powers.forEach((name, power) -> {
+            Map<String, Field> dependencies = dependencyMap.get(name);
 
-            powers.forEach((name, power) -> {
-                Map<String, Field> dependencies = dependencyMap.get(name);
-
-                dependencies.forEach((socketName, socket) -> {
-                    try {
-                        if (plugs.containsKey(socketName)) {
-                            socket.set(power, plugs.get(socketName));
-                            foundDependencies.get().put(socketName, socket);
-                        } else if (powers.containsKey(socketName)) {
-                            socket.set(power, powers.get(socketName));
-                            foundDependencies.get().put(socketName, socket);
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        throw new InstantiationException("Failed to inject Socket into Power");
+            dependencies.forEach((socketName, socket) -> {
+                try {
+                    if (plugs.containsKey(socketName)) {
+                        socket.set(power, plugs.get(socketName));
+                        foundDependencies.get().put(socketName, socket);
+                    } else if (powers.containsKey(socketName)) {
+                        socket.set(power, powers.get(socketName));
+                        foundDependencies.get().put(socketName, socket);
                     }
-                });
-
-                foundDependencies.get().forEach((powerName, dependency) -> {
-                    dependencies.remove(powerName);
-                });
-                if (dependencies.isEmpty()) dependencyMap.remove(name);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throw new InstantiationException("Failed to inject Socket into Power");
+                }
             });
 
-            if (previousSize == dependencyMap.size()) throw new ImpossibleDependencyException("Detected Impossible Dependencies, failed to fill all sockets");
-        } while (dependencyMap.size() > 0);
+            foundDependencies.get().forEach((powerName, dependency) -> {
+                dependencies.remove(powerName);
+            });
+            if (dependencies.isEmpty()) dependencyMap.remove(name);
+        });
+
+        if (dependencyMap.size() != 0) throw new ImpossibleDependencyException("Detected Impossible Dependencies, failed to fill all sockets");
     }
 
     private static void turnOn() {
