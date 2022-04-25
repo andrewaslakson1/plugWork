@@ -66,7 +66,7 @@ public class PlugManager {
         /* Stolen code belongs to mythbu from StackOverflow
          *      ~ Thanks my dude!
          */
-        String path = prefix.replaceAll("\\.", File.separator);
+        String path = prefix.replaceAll("\\.", "\\\\");
         String[] classPathEntries = System.getProperty("java.class.path").split(
                 System.getProperty("path.separator")
         );
