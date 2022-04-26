@@ -21,7 +21,6 @@ public class Starter implements Runnable {
             start.invoke(source);
         } catch (Exception e) {
             e.printStackTrace();
-            throw new PlugWorkConfigurationException("Failed to start application");
         }
     }
 }
