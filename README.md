@@ -47,6 +47,6 @@ In order to use, you must clone this repo down, perform `mvn clean install` with
 <dependency>
     <groupId>my.plug</groupId>
     <artifactId>plugWork</artifactId>
-    <version>1.0-MVP</version>
+    <version>1.1-MVP</version>
 </dependency>
 ````
