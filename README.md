@@ -21,7 +21,7 @@ There are 6 main annotations that need to be used when using this with a project
 - `@WireStation`:
   - Class Level
   - Serves the purpose of a config class
-  - Contains multiple methods marked with @Plug annotation
+  - May contain multiple methods marked with `@Plug` annotation
   - Must have No-Args constructor
 - `@Plug`:
   - Method Level
