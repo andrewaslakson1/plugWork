@@ -1,4 +1,4 @@
-package my.plug.plugWork.container;
+package my.plug.plugWork.wiringStation;
 
 public class WiringStation {
     public Class clazz;
